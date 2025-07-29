@@ -1,40 +1,41 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: auth-depl
+  name: tickets-depl
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: auth
+      app: tickets
   template:
     metadata:
       labels:
-        app: auth
+        app: tickets
     spec:
       containers:
-        - name: auth
-          image: karimshaaban/auth:latest
+        - name: tickets
+          image: karimshaaban/tickets:latest
           imagePullPolicy: Never
           env:
-            - name: MONGO_URI # I know this is exposed, it's just a local db, i'd set it as a k8s secret in production
-              value: 'mongodb://auth-mongo-srv:27017/auth'
             - name: JWT_KEY # JWT secret key from k8s secret object, k8s pod will not start if this is not set
               valueFrom:
                 secretKeyRef:
                   name: jwt-secret
                   key: JWT_KEY
+            - name: MONGO_URI # I know this is exposed, it's just a local db, i'd set it as a k8s secret in production
+              value: 'mongodb://tickets-mongo-srv:27017/tickets'
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: auth-srv
+  name: tickets-srv
 spec:
   type: ClusterIP #default not a must
   selector:
-    app: auth
+    app: tickets
   ports:
-    - name: auth
+    - name: tickets
       protocol: TCP
       port: 3000
       targetPort: 3000
