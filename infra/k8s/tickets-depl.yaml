@@ -17,6 +17,14 @@ spec:
           image: karimshaaban/tickets:latest
           imagePullPolicy: Never
           env:
+            - name: NATS_URL # I know this is exposed, it's just a local nats server, i'd set it as a k8s secret in production
+              value: 'nats://nats-srv:4222'
+            - name: NATS_CLUSTER_ID # I know this is exposed, it's just a local nats server, i'd set it as a k8s secret in production
+              value: 'ticketing'
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name #pod name will be used as client id
             - name: JWT_KEY # JWT secret key from k8s secret object, k8s pod will not start if this is not set
               valueFrom:
                 secretKeyRef:

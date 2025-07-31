@@ -22,7 +22,7 @@ spec:
             '-hbt', '5s', #how long a client has to respond
             '-hbf', '2', #how many times it can fail to think a client is dead
             '-SD', '-cid',
-            'ticketing'
+            'ticketing' #cluster ID : ticketing
           ]
 ---
 apiVersion: v1

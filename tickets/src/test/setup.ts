@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken';
 declare global {
   var signin: () => string[];
 }
-
+jest.mock('../nats-wrapper'); //real file we want to fake, jest would go and import the file in __mocks__ folder instead
 let mongo: MongoMemoryServer;
 beforeAll(async () => {
   //set the environment variables for testing, super test uses http connection
@@ -20,6 +20,7 @@ beforeAll(async () => {
 });
 //before each test delete everything
 beforeEach(async () => {
+  jest.clearAllMocks(); //clear the mock calls for event emitting function so we can check how many times it was called
   if (mongoose.connection.db) {
     const collections = await mongoose.connection.db.collections();
 
