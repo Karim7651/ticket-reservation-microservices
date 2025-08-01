@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orders
+  template:
+    metadata:
+      labels:
+        app: orders
+    spec:
+      containers:
+        - name: orders
+          image: karimshaaban/orders:latest
+          imagePullPolicy: Never
+          env:
+            - name: NATS_URL # I know this is exposed, it's just a local nats server, i'd set it as a k8s secret in production
+              value: 'nats://nats-srv:4222'
+            - name: NATS_CLUSTER_ID # I know this is exposed, it's just a local nats server, i'd set it as a k8s secret in production
+              value: 'ticketing'
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name #pod name will be used as client id
+            - name: JWT_KEY # JWT secret key from k8s secret object, k8s pod will not start if this is not set
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+            - name: MONGO_URI # I know this is exposed, it's just a local db, i'd set it as a k8s secret in production
+              value: 'mongodb://orders-mongo-srv:27017/orders'
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orders-srv
+spec:
+  type: ClusterIP #default not a must
+  selector:
+    app: orders
+  ports:
+    - name: orders
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
