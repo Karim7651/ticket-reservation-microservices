@@ -2,11 +2,13 @@ import express , {Request, Response} from 'express';
 import { Order } from '../models/order';
 import { NotAuthorizedError, NotFoundError, requireAuth } from '@ktickets2025/common';
 import { OrderStatus } from '../models/order';
+import { OrderCancelledPublisher } from '../events/publishers/order-cancelled-publisher';
+import { natsWrapper } from '../nats-wrapper';
 const router = express.Router();
 
 router.delete('/api/orders/:orderId', async(req: Request, res: Response) => {
     const {orderId} = req.params;
-    const order = await Order.findById(orderId)
+    const order = await Order.findById(orderId).populate('ticket')
     if(!order){
         throw new NotFoundError();
     }
@@ -16,8 +18,14 @@ router.delete('/api/orders/:orderId', async(req: Request, res: Response) => {
     order.status = OrderStatus.Cancelled;
     await order.save();
     //publish an event => order:cancelled
-
-    res.status(204).send();
+    new OrderCancelledPublisher(natsWrapper.client).publish({
+      id: order.id,
+      version: order.version,
+      ticket: {
+        id: order.ticket.id,
+      }
+    });
+    res.status(204).send(order);
 })
 
 export {router as deleteOrderRouter};

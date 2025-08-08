@@ -5,6 +5,8 @@ import { body } from 'express-validator';
 
 import { Ticket } from '../models/ticket';
 import { Order } from '../models/order';
+import { natsWrapper } from '../nats-wrapper';
+import { OrderCreatedPublisher } from '../events/publishers/order-created-publisher';
 export const EXPIRATION_WINDOW_SECONDS = 15 * 60; //15 minutes => environment variable is better for this
 const router = express.Router();
 
@@ -49,8 +51,18 @@ router.post(
       ticket
     });
     await order.save();
-
-    //Emit an event saying that an order was created
+    //Emit an event saying that an order was created (ticketsService locks the ticket (prevents editing price))
+    new OrderCreatedPublisher(natsWrapper.client).publish({
+      id:order.id,
+      version: order.version,
+      status: order.status,
+      userId: order.userId,
+      expiresAt: order.expiresAt.toISOString(), //UTC format
+      ticket:{
+        id: ticket.id,
+        price: ticket.price
+      }
+    })
     res.status(201).send(order);
   }
 );
