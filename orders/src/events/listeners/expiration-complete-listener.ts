@@ -15,10 +15,13 @@ export class ExpirationCompleteListener extends Listener<ExpirationCompleteEvent
         if (!order) {
             throw new Error('Order not found');
         }
+        //order has been paid for no need to take any action just ack msg
+        if(order.status === OrderStatus.Complete){
+            return msg.ack();
+        }
         // Mark the order as expired
         order.set({ 
             status: OrderStatus.Cancelled, //unlock ticket since order is cancelled
-            
         });
         await order.save();
         await new OrderCancelledPublisher(this.client).publish({ //await before acking the msg

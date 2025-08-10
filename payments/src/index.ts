@@ -1,10 +1,9 @@
 import mongoose from 'mongoose';
 import { natsWrapper } from './nats-wrapper';
 import { app } from './app';
-import { TicketCreatedListener } from './events/listeners/ticket-created-listener';
-import { TicketUpdatedListener } from './events/listeners/ticket-updated-listener';
-import { ExpirationCompleteListener } from './events/listeners/expiration-complete-listener';
-import { PaymentCreatedListener } from './events/listeners/payment-created-listener';
+import { OrderCreatedListener } from './events/listeners/order-created-listener';
+import { OrderCancelledListener } from './events/listeners/order-cancelled-listener';
+
 const start = async () => {
   if (!process.env.JWT_KEY) {
     //type guard
@@ -26,11 +25,7 @@ const start = async () => {
     //type guard
     throw new Error('NATS_CLUSTER_ID must be defined');
   }
-  await natsWrapper.connect(
-    process.env.NATS_CLUSTER_ID,
-    process.env.NATS_CLIENT_ID,
-    process.env.NATS_URL
-  );
+  await natsWrapper.connect(process.env.NATS_CLUSTER_ID, process.env.NATS_CLIENT_ID, process.env.NATS_URL);
   natsWrapper.client.on('close', () => {
     console.log('NATS connection closed');
     process.exit();
@@ -40,11 +35,10 @@ const start = async () => {
   process.on('SIGINT', () => natsWrapper.client.close());
   process.on('SIGTERM', () => natsWrapper.client.close());
 
-  //listen for events
-  new TicketCreatedListener(natsWrapper.client).listen();
-  new TicketUpdatedListener(natsWrapper.client).listen();
-  new ExpirationCompleteListener(natsWrapper.client).listen();
-  new PaymentCreatedListener(natsWrapper.client).listen();
+  //start listening
+  new OrderCreatedListener(natsWrapper.client).listen();
+  new OrderCancelledListener(natsWrapper.client).listen();
+ 
 
   try {
     await mongoose.connect(process.env.MONGO_URI);
