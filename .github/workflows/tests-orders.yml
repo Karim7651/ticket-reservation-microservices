@@ -1,6 +1,8 @@
 name: tests-orders
 on: 
-  pull_request
+  pull_request:
+    paths:
+      - 'orders/**' #only if anything inside auth dir is changed
 
 jobs:
   build:

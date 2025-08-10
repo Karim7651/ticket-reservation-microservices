@@ -1,6 +1,8 @@
 name: tests-tickets
 on: 
-  pull_request
+  pull_request:
+    paths:
+      - 'tickets/**' #only if anything inside auth dir is changed
 
 jobs:
   build:

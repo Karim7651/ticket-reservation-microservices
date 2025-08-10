@@ -1,6 +1,8 @@
 name: tests-auth
 on: 
-  pull_request
+  pull_request:
+    paths:
+      - 'auth/**' #only if anything inside auth dir is changed
 
 jobs:
   build:
